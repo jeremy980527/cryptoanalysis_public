@@ -91,12 +91,12 @@
                     statusText.innerText = '伺服器正在爬取運算中...';
                     dot.className = 'dot orange';
                 } else {
-                    statusText.innerText = '伺服器發生內部錯誤';
+                    statusText.innerText = '伺服器尚未運行, 請等待伺服器重新開啟...';
                     dot.className = 'dot red';
                 }
             } catch (e) {
                 console.error(e);
-                statusText.innerText = '無法連線 (請確認電腦端 Server 與 Ngrok 是否開啟)';
+                statusText.innerText = '無法連線, 請稍後再試...';
                 dot.className = 'dot red';
             }
         }
@@ -144,3 +144,4 @@
     </script>
 </body>
 </html>
+
