@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>加密貨幣趨勢監控</title>
     <style>
-        /* 深色主題樣式，模仿你的原始設計 */
+        /* 深色主題樣式 */
         body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #121212; color: #e0e0e0; }
         h1 { text-align: center; color: #fff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(33, 150, 243, 0.5); }
         .subtitle { text-align: center; color: #888; font-size: 0.9em; margin-bottom: 30px; }
@@ -19,7 +19,6 @@
         .section { margin-bottom: 25px; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid #333; }
         .section h3 { margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
         
-        /* 不同趨勢的配色 */
         .section.bull { border-left: 5px solid #4CAF50; }
         .section.bull h3 { color: #4CAF50; border-color: #4CAF50; }
         
@@ -38,11 +37,9 @@
         .badges { display: flex; gap: 8px; align-items: center; }
         .badge { padding: 5px 10px; border-radius: 6px; font-size: 0.85em; font-weight: 500; }
         
-        /* 分數與訊息標籤 */
         .score-badge { background: #333; color: #fff; border: 1px solid #555; }
         .msg-badge { background: #1a1a1a; border: 1px solid #444; color: #aaa; }
         
-        /* 如果有 "爆量" 標籤，給它特別顏色 */
         .fire { color: #ff9800; font-weight: bold; }
 
         .empty-msg { color: #555; font-style: italic; text-align: center; padding: 20px; }
@@ -68,8 +65,8 @@
     <div class="footer">Data provided by BotVsing Analysis Core</div>
 
     <script>
-        // 設定你的公開 API 網址 (已填入你剛剛提供的 Ngrok 網址)
-        const API_URL = "https://tunefully-abstemious-shu.ngrok-free.dev/api/results";
+        // 【重要】請將下方網址換成你 Ngrok 產生的最新網址
+        const API_URL = "https://tunefully-abstemious-shu.ngrok-free.dev -> http://localhost:8000";
 
         async function updateDashboard() {
             const statusText = document.getElementById('statusText');
@@ -77,8 +74,13 @@
             const content = document.getElementById('content');
             
             try {
-                // 加上 timestamp 防止瀏覽器快取舊資料
-                const res = await fetch(`${API_URL}?t=${new Date().getTime()}`);
+                // 加上時間戳記防止快取，並加入通關密語 Header
+                const res = await fetch(`${API_URL}?t=${new Date().getTime()}`, {
+                    headers: new Headers({
+                        "ngrok-skip-browser-warning": "true",
+                    }),
+                });
+
                 const json = await res.json();
                 
                 if (json.status === 'success') {
@@ -112,12 +114,10 @@
                     listHtml = '<div class="empty-msg">目前無符合條件幣種</div>';
                 } else {
                     listHtml = '<ul>' + list.map(item => {
-                        // 處理 "爆量" 的顯示效果
                         let displayMsg = item.msg;
                         if(displayMsg.includes('爆量')) {
                             displayMsg = displayMsg.replace('爆量', '<span class="fire">🔥爆量</span>');
                         }
-
                         return `
                         <li>
                             <span class="coin-name">${item.name}</span>
@@ -133,13 +133,12 @@
                 return sec;
             };
 
-            // 依序渲染三個區塊
             container.appendChild(createSection('多頭異常 (Bullish)', data.bull, 'bull', '🚀'));
             container.appendChild(createSection('空頭異常 (Bearish)', data.bear, 'bear', '📉'));
             container.appendChild(createSection('等待突破 (Neutral)', data.neut, 'neut', '⚖️'));
         }
 
-        // 啟動自動更新 (每 10 秒檢查一次)
+        // 啟動自動更新 (每 10 秒)
         updateDashboard();
         setInterval(updateDashboard, 10000); 
     </script>
