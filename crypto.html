@@ -4,49 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>加密貨幣趨勢監控</title>
-    <style>
-        /* 深色主題樣式 */
-        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #121212; color: #e0e0e0; }
-        h1 { text-align: center; color: #fff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(33, 150, 243, 0.5); }
-        .subtitle { text-align: center; color: #888; font-size: 0.9em; margin-bottom: 30px; }
-        
-        .status-bar { text-align: right; margin-bottom: 15px; font-size: 0.8em; color: #666; display: flex; align-items: center; justify-content: flex-end; gap: 8px;}
-        .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #444; }
-        .dot.green { background: #4CAF50; box-shadow: 0 0 5px #4CAF50; }
-        .dot.red { background: #F44336; box-shadow: 0 0 5px #F44336; }
-        .dot.orange { background: #FF9800; box-shadow: 0 0 5px #FF9800; }
-        
-        .section { margin-bottom: 25px; background: #1e1e1e; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); border: 1px solid #333; }
-        .section h3 { margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
-        
-        .section.bull { border-left: 5px solid #4CAF50; }
-        .section.bull h3 { color: #4CAF50; border-color: #4CAF50; }
-        
-        .section.bear { border-left: 5px solid #F44336; }
-        .section.bear h3 { color: #F44336; border-color: #F44336; }
-        
-        .section.neut { border-left: 5px solid #2196F3; }
-        .section.neut h3 { color: #2196F3; border-color: #2196F3; }
-
-        ul { list-style: none; padding: 0; margin: 0; }
-        li { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #2a2a2a; transition: all 0.2s; border-radius: 8px; margin-bottom: 5px; background: #252525; }
-        li:hover { transform: translateY(-2px); background: #2f2f2f; }
-        
-        .coin-name { font-weight: bold; font-size: 1.2em; color: #fff; letter-spacing: 1px; }
-        
-        .badges { display: flex; gap: 8px; align-items: center; }
-        .badge { padding: 5px 10px; border-radius: 6px; font-size: 0.85em; font-weight: 500; }
-        
-        .score-badge { background: #333; color: #fff; border: 1px solid #555; }
-        .msg-badge { background: #1a1a1a; border: 1px solid #444; color: #aaa; }
-        
-        .fire { color: #ff9800; font-weight: bold; }
-
-        .empty-msg { color: #555; font-style: italic; text-align: center; padding: 20px; }
-        .loading { text-align: center; padding: 40px; color: #666; font-style: italic; }
-        
-        .footer { text-align: center; margin-top: 40px; color: #444; font-size: 0.8em; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -64,84 +22,6 @@
 
     <div class="footer">Data provided by BotVsing Analysis Core</div>
 
-    <script>
-        // 【重要】請將下方網址換成你 Ngrok 產生的最新網址
-        const API_URL = "https://tunefully-abstemious-shu.ngrok-free.dev/api/results";
-
-        async function updateDashboard() {
-            const statusText = document.getElementById('statusText');
-            const dot = document.getElementById('dot');
-            const content = document.getElementById('content');
-            
-            try {
-                // 加上時間戳記防止快取，並加入通關密語 Header
-                const res = await fetch(`${API_URL}?t=${new Date().getTime()}`, {
-                    headers: new Headers({
-                        "ngrok-skip-browser-warning": "true",
-                    }),
-                });
-
-                const json = await res.json();
-                
-                if (json.status === 'success') {
-                    statusText.innerText = `最後更新: ${json.timestamp}`;
-                    dot.className = 'dot green';
-                    renderLists(json.data);
-                } else if (json.status === 'waiting') {
-                    statusText.innerText = '伺服器正在爬取運算中...';
-                    dot.className = 'dot orange';
-                } else {
-                    statusText.innerText = '伺服器尚未運行, 請等待伺服器重新開啟...';
-                    dot.className = 'dot red';
-                }
-            } catch (e) {
-                console.error(e);
-                statusText.innerText = '無法連線, 請稍後再試...';
-                dot.className = 'dot red';
-            }
-        }
-
-        function renderLists(data) {
-            const container = document.getElementById('content');
-            container.innerHTML = ''; 
-
-            const createSection = (title, list, typeClass, icon) => {
-                const sec = document.createElement('div');
-                sec.className = `section ${typeClass}`;
-                
-                let listHtml = '';
-                if (list.length === 0) {
-                    listHtml = '<div class="empty-msg">目前無符合條件幣種</div>';
-                } else {
-                    listHtml = '<ul>' + list.map(item => {
-                        let displayMsg = item.msg;
-                        if(displayMsg.includes('爆量')) {
-                            displayMsg = displayMsg.replace('爆量', '<span class="fire">🔥爆量</span>');
-                        }
-                        return `
-                        <li>
-                            <span class="coin-name">${item.name}</span>
-                            <div class="badges">
-                                <span class="badge msg-badge">${displayMsg}</span>
-                                <span class="badge score-badge">綜合分數 ${item.score}%</span>
-                            </div>
-                        </li>
-                    `}).join('') + '</ul>';
-                }
-
-                sec.innerHTML = `<h3>${icon} ${title}</h3>${listHtml}`;
-                return sec;
-            };
-
-            container.appendChild(createSection('多頭異常 (Bullish)', data.bull, 'bull', '🚀'));
-            container.appendChild(createSection('空頭異常 (Bearish)', data.bear, 'bear', '📉'));
-            container.appendChild(createSection('等待突破 (Neutral)', data.neut, 'neut', '⚖️'));
-        }
-
-        // 啟動自動更新 (每 10 秒)
-        updateDashboard();
-        setInterval(updateDashboard, 10000); 
-    </script>
+    <script src="script.js"></script>
 </body>
 </html>
-
