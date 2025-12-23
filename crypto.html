@@ -3,533 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>加密貨幣分析工具 (自動監控版)</title>
+    <title>加密貨幣趨勢監控</title>
     <style>
-        /* --- 這一區完全保留你原本的 crypto2.html 樣式 --- */
-        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background-color: #121212; color: #e0e0e0; transition: all 0.3s ease; }
-        h1 { color: #ffffff; text-align: center; text-shadow: 0 0 10px rgba(33, 150, 243, 0.5); }
-        .container { background-color: #1e1e1e; padding: 30px; border-radius: 12px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5); transition: transform 0.3s ease; }
-        .container:hover { transform: translateY(-5px); }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 8px; font-weight: 600; color: #bbdefb; }
-        .input-group { display: flex; gap: 10px; }
-        input[type="text"], input[type="number"] { flex: 1; padding: 12px; border: 1px solid #333; border-radius: 8px; background-color: #2a2a2a; color: #e0e0e0; transition: all 0.3s ease; box-sizing: border-box; }
-        input:focus { outline: none; border-color: #2196f3; box-shadow: 0 0 8px rgba(33, 150, 243, 0.5); }
-        select { padding: 12px; border: 1px solid #333; border-radius: 8px; background-color: #2a2a2a; color: #e0e0e0; transition: all 0.3s ease; }
-        select:focus { outline: none; border-color: #2196f3; box-shadow: 0 0 8px rgba(33, 150, 243, 0.5); }
-        button { background: linear-gradient(45deg, #2196f3, #21cbf3); color: #ffffff; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-size: 16px; width: 100%; position: relative; overflow: hidden; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(33, 150, 243, 0.4); }
-        button:hover { background: linear-gradient(45deg, #21cbf3, #2196f3); box-shadow: 0 8px 25px rgba(33, 150, 243, 0.6); transform: translateY(-2px); }
-        button:active { transform: translateY(0); }
-        button::before { content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0; background: rgba(255, 255, 255, 0.3); border-radius: 50%; transform: translate(-50%, -50%); transition: width 0.6s ease, height 0.6s ease; }
-        button:hover::before { width: 300px; height: 300px; }
-        textarea { width: 100%; padding: 12px; border: 1px solid #333; border-radius: 8px; background-color: #2a2a2a; color: #e0e0e0; transition: all 0.3s ease; box-sizing: border-box; min-height: 150px; font-family: monospace; }
-        textarea:focus { outline: none; border-color: #2196f3; box-shadow: 0 0 8px rgba(33, 150, 243, 0.5); }
+        body { font-family: 'Segoe UI', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #121212; color: #e0e0e0; }
+        h1 { text-align: center; color: #fff; margin-bottom: 5px; }
+        .subtitle { text-align: center; color: #888; font-size: 0.9em; margin-bottom: 30px; }
         
-        .mode-toggle { display: flex; gap: 10px; margin-bottom: 20px; }
-        .mode-btn { flex: 1; padding: 10px; background: #333; color: #e0e0e0; border: 1px solid #444; border-radius: 6px; cursor: pointer; transition: all 0.3s ease; }
-        .mode-btn.active { background: #2196f3; color: #ffffff; }
+        .status-bar { text-align: right; margin-bottom: 15px; font-size: 0.8em; color: #666; }
+        .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #444; margin-right: 5px; }
+        .dot.green { background: #4CAF50; box-shadow: 0 0 5px #4CAF50; }
+        .dot.red { background: #F44336; }
         
-        /* --- 新增：即時模式專屬樣式 --- */
-        .mode-btn.realtime-active { background: #ff9800; color: #fff; animation: pulse 2s infinite; border-color: #f57c00; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 152, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 152, 0, 0); } }
-        
-        /* --- 新增：API 狀態列樣式 --- */
-        .api-status-bar { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 15px; font-size: 0.9em; color: #888; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; margin-right: 6px; display: inline-block; }
-        .status-dot.green { background: #4CAF50; box-shadow: 0 0 5px #4CAF50; }
-        .status-dot.red { background: #F44336; box-shadow: 0 0 5px #F44336; }
-        .status-dot.orange { background: #FF9800; }
+        .section { margin-bottom: 25px; background: #1e1e1e; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .section h3 { margin-top: 0; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .section.bull h3 { color: #4CAF50; border-color: #4CAF50; }
+        .section.bear h3 { color: #F44336; border-color: #F44336; }
+        .section.neut h3 { color: #2196F3; border-color: #2196F3; }
 
-        .single-mode, .bulk-mode { transition: opacity 0.3s ease; }
-        .single-mode.hidden, .bulk-mode.hidden { display: none; }
-        .results { margin-top: 25px; padding: 10px; border-radius: 8px; background-color: #252525; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); transition: all 0.3s ease; }
-        .results h2 { margin: 0 0 10px 0; color: #ffffff; text-shadow: 0 0 5px rgba(255, 255, 255, 0.2); }
-        .indicator { margin: 5px 0; padding: 15px; border-radius: 8px; transition: all 0.3s ease; }
-        .positive { background-color: rgba(76, 175, 80, 0.3); border-left: 5px solid #4CAF50; box-shadow: 0 2px 8px rgba(76, 175, 80, 0.2); }
-        .warning { background-color: rgba(255, 152, 0, 0.3); border-left: 5px solid #FF9800; box-shadow: 0 2px 8px rgba(255, 152, 0, 0.2); }
-        .negative { background-color: rgba(244, 67, 54, 0.3); border-left: 5px solid #F44336; box-shadow: 0 2px 8px rgba(244, 67, 54, 0.2); }
-        .neutral { background-color: rgba(33, 150, 243, 0.3); border-left: 5px solid #2196F3; box-shadow: 0 2px 8px rgba(33, 150, 243, 0.2); }
-        .hidden { display: none; }
-        .data-link { display: block; text-align: center; margin: 10px 0; color: #2196f3; text-decoration: none; font-size: 16px; transition: all 0.3s ease; }
-        .data-link:hover { color: #21cbf3; text-shadow: 0 0 8px rgba(33, 150, 243, 0.5); }
-        .bulk-results-list { list-style: none; padding: 0; margin: 10px 0; }
-        .bulk-results-list li { display: flex; align-items: center; justify-content: space-between; background-color: #4a4a4a; padding: 10px 20px; border-radius: 15px; border-left: 5px solid #00ff7f; margin-bottom: 10px; font-size: 16px; transition: transform 0.3s ease; }
-        .bulk-results-list li:hover { transform: translateY(-3px); }
-        .bulk-results-list li .probability, .bulk-results-list li .holding-intent { display: inline-block; background-color: #3b3b3b; padding: 5px 10px; border-radius: 10px; margin-left: 10px; }
-        .bulk-results-list li.multi { border-left-color: #4CAF50; }
-        .bulk-results-list li.bear { border-left-color: #F44336; }
-        .bulk-results-list li.neutral { border-left-color: #2196F3; }
-        .trend-section { margin-bottom: 20px; }
-        .trend-section h4 { margin: 10px 0; color: #ffffff; }
-        #bulkResults { margin-top: 0; padding-top: 10px; }
-        .footer { text-align: center; margin-top: 20px; color: #888; font-size: 12px; }
+        ul { list-style: none; padding: 0; margin: 0; }
+        li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; transition: background 0.2s; }
+        li:last-child { border-bottom: none; }
+        li:hover { background: #2a2a2a; }
+        
+        .coin-name { font-weight: bold; font-size: 1.1em; color: #fff; }
+        .badges { display: flex; gap: 8px; }
+        .badge { padding: 4px 8px; border-radius: 6px; font-size: 0.85em; }
+        .score-badge { background: #333; color: #ddd; }
+        .msg-badge { background: #2a2a2a; border: 1px solid #444; color: #aaa; }
+        
+        .empty-msg { color: #555; font-style: italic; text-align: center; padding: 10px; }
+        
+        
+        .loading { text-align: center; padding: 20px; color: #666; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>加密貨幣分析工具</h1>
-        
-        <div class="api-status-bar">
-            <span id="apiDot" class="status-dot"></span>
-            <span id="apiStatusText">等待啟動...</span>
-        </div>
 
-        <a href="https://botvsing.com/" class="data-link" target="_blank">及時資料查詢</a>
-        
-        <div class="mode-toggle">
-            <button class="mode-btn active" onclick="toggleMode('single')">單一分析模式</button>
-            <button class="mode-btn" onclick="toggleMode('bulk')">一次分析模式</button>
-            <button class="mode-btn" id="realtimeBtn" onclick="toggleMode('realtime')">即時查看模式</button>
-        </div>
-        
-        <div id="single-mode" class="single-mode">
-            <div class="form-group">
-                <label for="tokenName">代幣名稱</label>
-                <input type="text" id="tokenName" placeholder="輸入代幣名稱">
-            </div>
-            
-            <div class="form-group">
-                <label for="oi">未平倉合約額 (OI)</label>
-                <div class="input-group">
-                    <input type="number" id="oi" step="any" placeholder="輸入未平倉合約額 (M或B)">
-                    <select id="oiUnit"><option value="M">M (百萬)</option><option value="B">B (十億)</option></select>
-                </div>
-            </div>
-            
-            <div class="form-group">
-                <label for="cap">市值 (Cap)</label>
-                <div class="input-group">
-                    <input type="number" id="cap" step="any" placeholder="輸入市值 (M或B)">
-                    <select id="capUnit"><option value="M">M (百萬)</option><option value="B">B (十億)</option></select>
-                </div>
-            </div>
+    <h1>市場異常監控看板</h1>
+    <div class="subtitle">自動追蹤高槓桿與異常交易量幣種</div>
 
-            <div class="form-group">
-                <label for="vol">交易量 (Vol)</label>
-                <div class="input-group">
-                    <input type="number" id="vol" step="any" placeholder="輸入24小時交易量 (M或B)">
-                    <select id="volUnit"><option value="M">M (百萬)</option><option value="B">B (十億)</option></select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="apr">年化利率 (APR) %</label>
-                <input type="number" id="apr" step="any" placeholder="輸入年化利率百分比">
-            </div>
-
-            <div class="form-group">
-                <label for="funding">資金費率 (Funding) %</label>
-                <input type="number" id="funding" step="any" placeholder="輸入資金費率百分比">
-            </div>
-
-            <button id="analyzeBtn">分析</button>
-        </div>
-        
-        <div id="bulk-mode" class="bulk-mode hidden">
-            <div class="form-group">
-                <label for="bulkData" id="bulkLabel">貼上批量數據 (每行一個幣，Tab分隔)</label>
-                <textarea id="bulkData" placeholder="例如：&#10;DOGE	DOGE	Hyperliquid	313.1M	38.0B	120.6M	37.6%	0.0043% ▼	...&#10;... (貼上所有行)"></textarea>
-            </div>
-            <button id="bulkAnalyzeBtn">批量分析交易量異常警告</button>
-        </div>
-        
-        <div id="results" class="results hidden">
-            <h2>分析結果：<span id="tokenNameDisplay"></span></h2>
-            
-            <div id="scoreIndicator" class="indicator"></div>
-            <div id="leverageIndicator" class="indicator"></div>
-            <div id="volumeIndicator" class="indicator"></div>
-            <div id="volumeAbnormalIndicator" class="indicator"></div>
-            <div id="trendIndicator" class="indicator"></div>
-            <div id="oiVolIndicator" class="indicator"></div>
-            
-            <div id="bulkResults" class="hidden">
-                <h3>交易量異常警告幣種列表</h3>
-                <div class="trend-section"><h4>多頭趨勢</h4><ul id="bullishList" class="bulk-results-list"></ul></div>
-                <div class="trend-section"><h4>空頭趨勢</h4><ul id="bearishList" class="bulk-results-list"></ul></div>
-                <div class="trend-section"><h4>等待突破</h4><ul id="neutralList" class="bulk-results-list"></ul></div>
-            </div>
-        </div>
+    <div class="status-bar">
+        <span id="dot" class="dot"></span>
+        <span id="statusText">連線中...</span>
     </div>
-    <div class="footer">© 2025 je._.ffk. All rights reserved.</div>
+
+    <div id="content">
+        <div class="loading">正在等待伺服器回傳分析結果...</div>
+    </div>
 
     <script>
-        // --- 新增：即時資料處理邏輯 ---
-        let realtimeTimer = null;
         
-        async function fetchRealtimeData() {
-            const statusDot = document.getElementById('apiDot');
-            const statusText = document.getElementById('apiStatusText');
+        async function updateDashboard() {
+            const statusText = document.getElementById('statusText');
+            const dot = document.getElementById('dot');
+            const content = document.getElementById('content');
             
-            statusText.textContent = "資料更新中...";
-            statusDot.className = "status-dot orange";
-
             try {
-                // 連線到你的 server.py
-                const response = await fetch('http://localhost:8000/api/data');
-                const json = await response.json();
                 
-                if (json.status === "success" && json.raw_text) {
-                    // 將資料填入 Textarea
-                    document.getElementById('bulkData').value = json.raw_text;
-                    // 自動按下分析按鈕，觸發原本的邏輯
-                    document.getElementById('bulkAnalyzeBtn').click();
-                    
-                    statusText.textContent = `更新於 ${json.timestamp}`;
-                    statusDot.className = "status-dot green";
-                } else if (json.status === "waiting") {
-                    statusText.textContent = "伺服器爬取中...";
-                    statusDot.className = "status-dot orange";
+                const res = await fetch('http://localhost:8000/api/results');
+                const json = await res.json();
+                
+                if (json.status === 'success') {
+                    statusText.innerText = `最後更新: ${json.timestamp}`;
+                    dot.className = 'dot green';
+                    renderLists(json.data);
                 } else {
-                    statusText.textContent = "伺服器錯誤 (請檢查 Python)";
-                    statusDot.className = "status-dot red";
+                    statusText.innerText = '伺服器正在計算中...';
+                    dot.className = 'dot';
                 }
-            } catch (err) {
-                console.error(err);
-                statusText.textContent = "API 連線失敗 (server.py 未啟動?)";
-                statusDot.className = "status-dot red";
+            } catch (e) {
+                console.error(e);
+                statusText.innerText = '無法連線至數據中心';
+                dot.className = 'dot red';
             }
         }
 
-        // --- 修改後的模式切換 (相容原本邏輯) ---
-        function toggleMode(mode) {
-            const singleMode = document.getElementById('single-mode');
-            const bulkMode = document.getElementById('bulk-mode');
-            const singleBtn = document.querySelector('.mode-btn:nth-child(1)');
-            const bulkBtn = document.querySelector('.mode-btn:nth-child(2)');
-            const realtimeBtn = document.getElementById('realtimeBtn');
-            const results = document.getElementById('results');
-            const bulkResults = document.getElementById('bulkResults');
-            const bulkLabel = document.getElementById('bulkLabel');
+        function renderLists(data) {
+            const container = document.getElementById('content');
+            container.innerHTML = ''; 
 
-            // 重置
-            results.classList.add('hidden');
-            bulkResults.classList.add('hidden');
-            // 清空指標文字 (保留原本代碼)
-            document.getElementById('tokenNameDisplay').textContent = '';
-            document.getElementById('bullishList').innerHTML = ''; 
-            // ... (為節省篇幅，其他清空邏輯略，因為切換hidden已經足夠)
-
-            // 清除按鈕狀態
-            singleBtn.classList.remove('active');
-            bulkBtn.classList.remove('active');
-            realtimeBtn.classList.remove('active', 'realtime-active');
-            
-            // 停止計時器
-            if (realtimeTimer) clearInterval(realtimeTimer);
-
-            if (mode === 'single') {
-                singleMode.classList.remove('hidden');
-                bulkMode.classList.add('hidden');
-                singleBtn.classList.add('active');
-            } 
-            else if (mode === 'bulk') {
-                singleMode.classList.add('hidden');
-                bulkMode.classList.remove('hidden');
-                bulkBtn.classList.add('active');
-                bulkLabel.textContent = "貼上批量數據 (每行一個幣，Tab分隔)";
-                document.getElementById('apiStatusText').textContent = "手動模式";
-                document.getElementById('apiDot').className = "status-dot";
-            } 
-            else if (mode === 'realtime') {
-                // 即時模式其實就是「自動化的批量模式」
-                singleMode.classList.add('hidden');
-                bulkMode.classList.remove('hidden');
-                realtimeBtn.classList.add('realtime-active');
-                bulkLabel.textContent = "⚠️ 即時監控中 (請勿手動修改，每小時自動刷新)";
+            const createSection = (title, list, typeClass) => {
+                const sec = document.createElement('div');
+                sec.className = `section ${typeClass}`;
                 
-                // 立即執行並設定排程
-                fetchRealtimeData();
-                realtimeTimer = setInterval(fetchRealtimeData, 3600000); // 1小時
-            }
-        }
+                let listHtml = '';
+                if (list.length === 0) {
+                    listHtml = '<div class="empty-msg">目前無符合條件幣種</div>';
+                } else {
+                    listHtml = '<ul>' + list.map(item => `
+                        <li>
+                            <span class="coin-name">${item.name}</span>
+                            <div class="badges">
+                                <span class="badge msg-badge">${item.msg}</span>
+                                <span class="badge score-badge">綜合分數 ${item.score}</span>
+                            </div>
+                        </li>
+                    `).join('') + '</ul>';
+                }
 
-        // --- 以下完全保留原本 crypto2.html 的核心邏輯 (計算與解析) ---
-
-        // 單一分析邏輯
-        document.getElementById('analyzeBtn').addEventListener('click', function() {
-            const tokenName = document.getElementById('tokenName').value || '未命名代幣';
-            const oi = parseFloat(document.getElementById('oi').value) || 0;
-            const oiUnit = document.getElementById('oiUnit').value;
-            const cap = parseFloat(document.getElementById('cap').value) || 1; 
-            const capUnit = document.getElementById('capUnit').value;
-            const vol = parseFloat(document.getElementById('vol').value) || 1; 
-            const volUnit = document.getElementById('volUnit').value;
-            const apr = parseFloat(document.getElementById('apr').value) || 0;
-            const funding = parseFloat(document.getElementById('funding').value) || 0;
-            
-            const oiValue = oiUnit === 'B' ? oi * 1000 : oi; 
-            const capValue = capUnit === 'B' ? cap * 1000 : cap; 
-            const volValue = volUnit === 'B' ? vol * 1000 : vol; 
-            
-            const formatValue = (value, unit) => {
-                if (value >= 1000) return `${(value / 1000).toFixed(2)} B`;
-                return `${value.toFixed(2)} M`;
+                sec.innerHTML = `<h3>${title}</h3>${listHtml}`;
+                return sec;
             };
-            
-            const oiCapRatio = (oiValue / capValue) * 100;
-            const volCapRatio = (volValue / capValue) * 100;
-            const oiVolRatio = oiValue / volValue;
-            
-            let oiVolMessage = '';
-            let oiVolClass = 'neutral';
-            if (oiVolRatio > 1) {
-                oiVolMessage = `<strong>持倉穩定</strong>：oi/vol 比率為 ${oiVolRatio.toFixed(2)} (OI: ${formatValue(oiValue, oiUnit)}, Vol: ${formatValue(volValue, volUnit)})`;
-            } else if (oiVolRatio < 0.5) {
-                oiVolMessage = `<strong>短期投機多</strong>：oi/vol 比率為 ${oiVolRatio.toFixed(2)} (OI: ${formatValue(oiValue, oiUnit)}, Vol: ${formatValue(volValue, volUnit)})`;
-                oiVolClass = 'warning';
-            } else {
-                oiVolMessage = `<strong>無明顯持倉意圖</strong>：oi/vol 比率為 ${oiVolRatio.toFixed(2)} (OI: ${formatValue(oiValue, oiUnit)}, Vol: ${formatValue(volValue, volUnit)})`;
-            }
 
-            const { bullishScore, bearishScore } = calculateScores(funding, apr, oiCapRatio);
-            
-            const scoreIndicator = document.getElementById('scoreIndicator');
-            let scoreClass = 'neutral';
-            if (bullishScore > 60 && bullishScore > bearishScore) {
-                scoreClass = 'positive';
-            } else if (bearishScore > 60 && bearishScore > bullishScore) {
-                scoreClass = 'negative';
-            }
-            scoreIndicator.innerHTML = `<strong>綜合分數</strong>：
-                <span style="color: #4CAF50;">多頭 ${bullishScore.toFixed(0)}%</span> / 
-                <span style="color: #F44336;">空頭 ${bearishScore.toFixed(0)}%</span>`;
-            scoreIndicator.className = `indicator ${scoreClass}`;
-            
-            document.getElementById('results').classList.remove('hidden');
-            document.getElementById('tokenNameDisplay').textContent = tokenName;
-            
-            const leverageIndicator = document.getElementById('leverageIndicator');
-            if (oiCapRatio > 10) {
-                leverageIndicator.innerHTML = `<strong>高槓桿入場佈局</strong>：oi/cap 比率為 ${oiCapRatio.toFixed(2)}% (OI: ${formatValue(oiValue, oiUnit)}, Cap: ${formatValue(capValue, capUnit)})`;
-                leverageIndicator.className = "indicator warning";
-            } else {
-                leverageIndicator.innerHTML = `<strong>正常槓桿水平</strong>：oi/cap 比率為 ${oiCapRatio.toFixed(2)}% (OI: ${formatValue(oiValue, oiUnit)}, Cap: ${formatValue(capValue, capUnit)})`;
-                leverageIndicator.className = "indicator neutral";
-            }
-            
-            const volumeIndicator = document.getElementById('volumeIndicator');
-            if (volCapRatio > 200) {
-                volumeIndicator.innerHTML = `<strong>主力操控</strong>：vol/cap 比率為 ${volCapRatio.toFixed(2)}% (Vol: ${formatValue(volValue, volUnit)}, Cap: ${formatValue(capValue, capUnit)})`;
-                volumeIndicator.className = "indicator negative";
-            } else if (volCapRatio > 100) {
-                volumeIndicator.innerHTML = `<strong>交易量極度異常放量</strong>：vol/cap 比率為 ${volCapRatio.toFixed(2)}% (Vol: ${formatValue(volValue, volUnit)}, Cap: ${formatValue(capValue, capUnit)})`;
-                volumeIndicator.className = "indicator warning";
-            } else if (volCapRatio > 50) {
-                volumeIndicator.innerHTML = `<strong>交易量異常放量</strong>：vol/cap 比率為 ${volCapRatio.toFixed(2)}% (Vol: ${formatValue(volValue, volUnit)}, Cap: ${formatValue(capValue, capUnit)})`;
-                volumeIndicator.className = "indicator warning";
-            } else {
-                volumeIndicator.innerHTML = `<strong>交易量正常</strong>：vol/cap 比率為 ${volCapRatio.toFixed(2)}% (Vol: ${formatValue(volValue, volUnit)}, Cap: ${formatValue(capValue, capUnit)})`;
-                volumeIndicator.className = "indicator neutral";
-            }
-            
-            const volumeAbnormalIndicator = document.getElementById('volumeAbnormalIndicator');
-            if (oiCapRatio > 10 && volCapRatio > 50) {
-                volumeAbnormalIndicator.innerHTML = `<strong>交易量異常警告</strong>：同時滿足高槓桿入場佈局和交易量異常放量條件`;
-                volumeAbnormalIndicator.className = "indicator negative";
-            } else {
-                volumeAbnormalIndicator.innerHTML = `<strong>交易量正常分析</strong>：未同時滿足高槓桿入場佈局和交易量異常放量條件`;
-                volumeAbnormalIndicator.className = "indicator neutral";
-            }
-            
-            const trendIndicator = document.getElementById('trendIndicator');
-            if (apr > 0 && funding > 0) {
-                trendIndicator.innerHTML = `<strong>多頭趨勢</strong>：APR (${apr.toFixed(2)}%) 和 Funding (${funding.toFixed(2)}%) 均為正值`;
-                trendIndicator.className = "indicator positive";
-            } else if (apr < 0 && funding < 0) {
-                trendIndicator.innerHTML = `<strong>空頭趨勢</strong>：APR (${apr.toFixed(2)}%) 和 Funding (${funding.toFixed(2)}%) 均為負值`;
-                trendIndicator.className = "indicator negative";
-            } else {
-                trendIndicator.innerHTML = `<strong>等待突破</strong>：APR (${apr.toFixed(2)}%) 和 Funding (${funding.toFixed(2)}%) 不同向`;
-                trendIndicator.className = "indicator neutral";
-            }
-            
-            const oiVolIndicator = document.getElementById('oiVolIndicator');
-            oiVolIndicator.innerHTML = oiVolMessage;
-            oiVolIndicator.className = `indicator ${oiVolClass}`;
-        });
-
-        // 綜合分數計算函式
-        function calculateScores(funding, apr, oiCapRatio) {
-            const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
-            // 多頭分數
-            const bullishFundingScore = funding > 0 ? clamp(funding / 0.05 * 100, 0, 100) : 0;
-            const bullishAprScore = apr > 0 ? clamp(apr / 50 * 100, 0, 100) : 0;
-            const bullishOiCapScore = oiCapRatio > 5 ? clamp((oiCapRatio - 5) / 15 * 100, 0, 100) : 0;
-            const bullishScore = (bullishFundingScore * 0.4) + (bullishAprScore * 0.3) + (bullishOiCapScore * 0.3);
-            // 空頭分數
-            const bearishFundingScore = funding < 0 ? clamp(Math.abs(funding) / 0.05 * 100, 0, 100) : 0;
-            const bearishAprScore = apr < 0 ? clamp(Math.abs(apr) / 50 * 100, 0, 100) : 0;
-            const bearishOiCapScore = oiCapRatio > 5 ? clamp((oiCapRatio - 5) / 15 * 100, 0, 100) : 0;
-            const bearishScore = (bearishFundingScore * 0.4) + (bearishAprScore * 0.3) + (bearishOiCapScore * 0.3);
-            return { bullishScore, bearishScore };
+            container.appendChild(createSection('🚀 多頭異常 (Bullish)', data.bull, 'bull'));
+            container.appendChild(createSection('📉 空頭異常 (Bearish)', data.bear, 'bear'));
+            container.appendChild(createSection('⚖️ 等待突破 (Neutral)', data.neut, 'neut'));
         }
 
-        // 批量分析邏輯 (包含你原有的多行合併 regex 邏輯)
-        document.getElementById('bulkAnalyzeBtn').addEventListener('click', function() {
-            const bulkData = document.getElementById('bulkData').value.trim();
-            if (!bulkData) {
-                // 如果是即時模式下空數據，就不跳 alert 擾民
-                if(!document.getElementById('realtimeBtn').classList.contains('realtime-active')) {
-                    alert('請貼上數據');
-                }
-                return;
-            }
-
-            // 預處理數據，將多行合併為單行
-            const lines = bulkData.split('\n').map(line => line.trim()).filter(line => line);
-            const mergedLines = [];
-            let currentLine = [];
-            const coinNamePattern = /^[A-Z0-9]+(\t|$)/;
-
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i];
-                if (coinNamePattern.test(line)) {
-                    if (currentLine.length) {
-                        mergedLines.push(currentLine.join('\t'));
-                    }
-                    currentLine = [line];
-                } else {
-                    currentLine.push(line);
-                }
-            }
-            if (currentLine.length) {
-                mergedLines.push(currentLine.join('\t'));
-            }
-
-            const seenCoins = new Set();
-            const bullishWarnings = [];
-            const bearishWarnings = [];
-            const neutralWarnings = [];
-
-            mergedLines.forEach((line, index) => {
-                const fields = line.split('\t').map(f => f.trim()).filter(f => f);
-                if (fields.length < 8) return;
-
-                const name = fields[0];
-                if (seenCoins.has(name)) return;
-                seenCoins.add(name);
-
-                const oiStr = fields[3];
-                const capStr = fields[4];
-                const volStr = fields[5];
-                let aprStr = fields[6];
-                let fundingStr = fields[7];
-
-                if ([oiStr, capStr, volStr, aprStr, fundingStr].some(field => !field || field === '—')) {
-                    return;
-                }
-
-                fundingStr = fundingStr.replace('▼', '').trim();
-
-                const parseAmount = (str) => {
-                    if (!str || str === '—') return 0;
-                    let numStr = str.replace(/[^\d.BM]/g, '');
-                    let multiplier = 1;
-                    if (numStr.endsWith('B')) {
-                        multiplier = 1000;
-                        numStr = numStr.slice(0, -1);
-                    } else if (numStr.endsWith('M')) {
-                        numStr = numStr.slice(0, -1);
-                    }
-                    const num = parseFloat(numStr) * multiplier;
-                    return isNaN(num) ? 0 : num;
-                };
-
-                const parsePercent = (str) => {
-                    if (!str) return 0;
-                    let clean = str.replace(/[^\d.-]/g, '');
-                    const num = parseFloat(clean);
-                    return isNaN(num) ? 0 : num;
-                };
-
-                const oiValue = parseAmount(oiStr);
-                const capValue = parseAmount(capStr) || 1;
-                const volValue = parseAmount(volStr) || 1;
-
-                const apr = parsePercent(aprStr);
-                const funding = parsePercent(fundingStr);
-
-                const oiCapRatio = (oiValue / capValue) * 100;
-                const volCapRatio = (volValue / capValue) * 100;
-                const oiVolRatio = oiValue / volValue;
-                const probability = (oiCapRatio + volCapRatio) / 2;
-
-                const { bullishScore, bearishScore } = calculateScores(funding, apr, oiCapRatio);
-
-                let oiVolMessage = '';
-                if (oiVolRatio > 1) {
-                    oiVolMessage = '持倉穩定';
-                } else if (oiVolRatio < 0.5) {
-                    oiVolMessage = '短期投機多';
-                } else {
-                    oiVolMessage = '無明顯持倉意圖';
-                }
-
-                if (oiCapRatio > 10 && volCapRatio > 50) {
-                    let trend = '等待突破';
-                    let trendClass = 'neutral';
-                    if (apr > 0 && funding > 0) {
-                        trend = '多頭';
-                        trendClass = 'multi';
-                        bullishWarnings.push({ name, trend, trendClass, probability, oiVolMessage, bullishScore, bearishScore });
-                    } else if (apr < 0 && funding < 0) {
-                        trend = '空頭';
-                        trendClass = 'bear';
-                        bearishWarnings.push({ name, trend, trendClass, probability, oiVolMessage, bullishScore, bearishScore });
-                    } else {
-                        neutralWarnings.push({ name, trend, trendClass, probability, oiVolMessage, bullishScore, bearishScore });
-                    }
-                }
-            });
-
-            bullishWarnings.sort((a, b) => b.bullishScore - a.bullishScore);
-            bearishWarnings.sort((a, b) => b.bearishScore - a.bearishScore);
-            neutralWarnings.sort((a, b) => Math.max(b.bullishScore, b.bearishScore) - Math.max(a.bullishScore, a.bearishScore));
-
-            document.getElementById('results').classList.remove('hidden');
-            document.getElementById('bulkResults').classList.remove('hidden');
-            
-            const bullishList = document.getElementById('bullishList');
-            const bearishList = document.getElementById('bearishList');
-            const neutralList = document.getElementById('neutralList');
-            
-            bullishList.innerHTML = '';
-            bearishList.innerHTML = '';
-            neutralList.innerHTML = '';
-
-            // 渲染列表 (保留原邏輯)
-            if (bullishWarnings.length === 0) bullishList.innerHTML = '<li>無多頭趨勢的幣種</li>';
-            else bullishWarnings.forEach(w => {
-                const li = document.createElement('li');
-                li.className = w.trendClass;
-                li.innerHTML = `${w.name} <span class="probability">多頭分數 ${w.bullishScore.toFixed(0)}%</span> <span class="holding-intent">${w.oiVolMessage}</span>`;
-                bullishList.appendChild(li);
-            });
-
-            if (bearishWarnings.length === 0) bearishList.innerHTML = '<li>無空頭趨勢的幣種</li>';
-            else bearishWarnings.forEach(w => {
-                const li = document.createElement('li');
-                li.className = w.trendClass;
-                li.innerHTML = `${w.name} <span class="probability" style="color: #ffb8b8; background-color: rgba(244, 67, 54, 0.3);">空頭分數 ${w.bearishScore.toFixed(0)}%</span> <span class="holding-intent">${w.oiVolMessage}</span>`;
-                bearishList.appendChild(li);
-            });
-
-            if (neutralWarnings.length === 0) neutralList.innerHTML = '<li>無等待突破的幣種</li>';
-            else neutralWarnings.forEach(w => {
-                const li = document.createElement('li');
-                li.className = w.trendClass;
-                li.innerHTML = `${w.name} <span class="probability" style="color: #bbdefb; background-color: rgba(33, 150, 243, 0.3);">趨勢分數 ${Math.max(w.bullishScore, w.bearishScore).toFixed(0)}%</span> <span class="holding-intent">${w.oiVolMessage}</span>`;
-                neutralList.appendChild(li);
-            });
-
-            if (mergedLines.length === 0 || mergedLines.every(line => line.split('\t').length < 8)) {
-                // 自動模式下如果不小心傳了空值，也不要一直跳警告
-                if(!document.getElementById('realtimeBtn').classList.contains('realtime-active')) {
-                   alert('無法解析有效數據...');
-                }
-            }
-        });
+        
+        updateDashboard();
+        setInterval(updateDashboard, 10000); 
     </script>
 </body>
 </html>
