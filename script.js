@@ -1,3 +1,4 @@
+// 【重要】請確認這裡是你 Ngrok 的最新網址
 const API_URL = "https://tunefully-abstemious-shu.ngrok-free.dev/api/results";
 
 // 狀態變數
@@ -52,7 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
     loadSettings();
     setupModal();
     updateDashboard();
+    
+    // 每 10 秒更新一次數據
     setInterval(updateDashboard, 10000); 
+
+    // 每 60 秒更新一次通知卡片上的時間 (例如：5分鐘前)
+    setInterval(updateToastTimes, 60000);
 });
 
 async function updateDashboard() {
@@ -106,7 +112,6 @@ function checkDiffAndNotify(newData) {
     const bearDiff = getDiff(previousDataMap.bear, currBear);
 
     let shouldNotify = false;
-    let notifyTitle = "";
     let notifyDetails = [];
     let alertType = 'mixed'; // bull, bear, mixed
 
@@ -125,14 +130,14 @@ function checkDiffAndNotify(newData) {
         shouldNotify = true;
         if (bearDiff.added.length > 0) notifyDetails.push(`<span class="added">📉 空頭新增: ${bearDiff.added.join(', ')}</span>`);
         if (bearDiff.removed.length > 0) notifyDetails.push(`<span class="removed">💨 空頭移除: ${bearDiff.removed.join(', ')}</span>`);
-        // 如果同時有多空變動，type 設為 mixed，否則設為 bear
+        // 如果同時有多空變動，type 設為 mixed
         alertType = (watchBull && (bullDiff.added.length || bullDiff.removed.length)) ? 'mixed' : 'bear';
     }
 
     if (shouldNotify) {
         playBell();
         
-        // 1. 網頁內彈窗 (Toast)
+        // 1. 網頁內彈窗 (Toast) - 不再自動消失
         showToastAlert("市場名單變動", notifyDetails.join('<br>'), alertType);
 
         // 2. 系統通知 (簡略版)
@@ -151,26 +156,61 @@ function getDiff(prev, curr) {
     };
 }
 
-// 顯示浮動通知視窗
+// --- 顯示浮動通知視窗 (修改版：永久顯示 + 時間標記) ---
 function showToastAlert(title, htmlContent, type) {
     const container = document.getElementById('notificationContainer');
     const toast = document.createElement('div');
+    
+    // 記錄建立時間戳記 (毫秒)
+    const nowTimestamp = Date.now();
+    toast.setAttribute('data-timestamp', nowTimestamp);
+    
     toast.className = `toast-alert ${type}`;
     
     toast.innerHTML = `
         <div class="toast-header">
-            <span>${title}</span>
+            <div class="toast-title-group">
+                <span class="toast-title-text">${title}</span>
+                <span class="toast-time">剛剛</span>
+            </div>
             <span class="toast-close" onclick="this.parentElement.parentElement.remove()">✕</span>
         </div>
         <div class="toast-body">${htmlContent}</div>
     `;
 
-    container.appendChild(toast);
+    // 使用 prepend 將最新的通知放在最上面
+    container.prepend(toast);
     
-    // 15秒後自動消失，避免堆積太多
-    setTimeout(() => {
-        if (toast.parentElement) toast.remove();
-    }, 15000);
+    // 已移除 setTimeout 自動關閉的程式碼
+}
+
+// --- 輔助函式：計算相對時間 (例如：剛剛、5分鐘前) ---
+function getRelativeTime(timestamp) {
+    const now = Date.now();
+    const diffInSeconds = Math.floor((now - timestamp) / 1000);
+
+    if (diffInSeconds < 60) return "剛剛";
+    
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes} 分鐘前`;
+    
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours} 小時前`;
+    
+    return "超過 1 天";
+}
+
+// --- 更新所有通知卡片的時間文字 ---
+function updateToastTimes() {
+    const toasts = document.querySelectorAll('.toast-alert');
+    toasts.forEach(toast => {
+        const timestamp = parseInt(toast.getAttribute('data-timestamp'));
+        const timeLabel = toast.querySelector('.toast-time');
+        
+        if (timestamp && timeLabel) {
+            timeLabel.innerText = getRelativeTime(timestamp);
+        }
+    });
 }
 
 function renderLists(data) {
@@ -208,7 +248,7 @@ function setupModal() {
 
     const notifyToggle = document.getElementById("notifyToggle");
     const soundToggle = document.getElementById("soundToggle");
-    const directionSelect = document.getElementById("directionSelect"); // 新增
+    const directionSelect = document.getElementById("directionSelect"); 
     const volSlider = document.getElementById("volumeSlider");
     const volText = document.getElementById("volValue");
     const testBtn = document.getElementById("testNotifyBtn");
@@ -216,7 +256,7 @@ function setupModal() {
     // 載入 UI
     notifyToggle.checked = settings.notifications;
     soundToggle.checked = settings.sound;
-    directionSelect.value = settings.direction; // 載入方向設定
+    directionSelect.value = settings.direction;
     volSlider.value = settings.volume * 100;
     volText.innerText = Math.round(settings.volume * 100) + "%";
 
@@ -231,7 +271,7 @@ function setupModal() {
         if (settings.sound && audioContext.state === 'suspended') audioContext.resume();
         saveSettings();
     };
-    directionSelect.onchange = () => { // 新增
+    directionSelect.onchange = () => {
         settings.direction = directionSelect.value;
         saveSettings();
     };
