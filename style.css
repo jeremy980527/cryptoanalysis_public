@@ -59,7 +59,6 @@ input:checked + .slider { background-color: #2196F3; }
 input:checked + .slider:before { transform: translateX(26px); }
 input[type=range] { width: 100px; accent-color: #2196F3; }
 
-/* --- 新增樣式：下拉選單 --- */
 .settings-select {
     padding: 5px 10px; background: #333; color: #fff; border: 1px solid #555; border-radius: 5px; outline: none;
 }
@@ -68,10 +67,11 @@ input[type=range] { width: 100px; accent-color: #2196F3; }
 .test-btn { width: 100%; padding: 10px; background: #333; color: #fff; border: 1px solid #555; border-radius: 5px; cursor: pointer; }
 .test-btn:hover { background: #444; }
 
-/* --- 新增樣式：浮動通知 (Toast) --- */
+/* --- 浮動通知 (Toast) --- */
 .notification-container {
     position: fixed; bottom: 20px; right: 20px; z-index: 999;
     display: flex; flex-direction: column; gap: 10px;
+    /* 這裡不需要反轉，我們用 prepend 讓新的在上面，或者 append 讓新的在下面 */
 }
 .toast-alert {
     background: #252525; color: #fff; width: 300px; padding: 15px; border-radius: 8px;
@@ -82,8 +82,34 @@ input[type=range] { width: 100px; accent-color: #2196F3; }
 .toast-alert.bear { border-left-color: #F44336; }
 .toast-alert.mixed { border-left-color: #FF9800; }
 
-.toast-header { font-weight: bold; margin-bottom: 5px; font-size: 1.1em; display: flex; justify-content: space-between; }
-.toast-close { cursor: pointer; color: #aaa; font-weight: normal; }
+/* 通知 Header 修改：支援時間顯示與對齊 */
+.toast-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: flex-start; /* 讓標題跟叉叉對齊頂部 */
+    margin-bottom: 8px; 
+}
+.toast-title-group {
+    display: flex;
+    flex-direction: column; /* 標題在上，時間在下 */
+}
+.toast-title-text {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+.toast-time {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 2px;
+}
+.toast-close { 
+    cursor: pointer; 
+    color: #aaa; 
+    font-weight: bold; 
+    padding: 0 5px;
+    font-size: 1.2em;
+    line-height: 1;
+}
 .toast-close:hover { color: #fff; }
 .toast-body { font-size: 0.9em; line-height: 1.4; color: #ddd; }
 .added { color: #4CAF50; }
